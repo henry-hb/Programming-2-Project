@@ -5,6 +5,11 @@
     determine if time zone uses daylight savings and adjust from that point
     slider y/n for if you want to adjust for daylight savings
 
+    steps:
+    understand logic of user choosing a timezone and it changes the time that gets displayed
+    design interface so that timezone gets changed by clicking rectangles
+    design clock pattern so that it updates live and looks like a clock
+    publish as website?
 """
 
 import tkinter as tk

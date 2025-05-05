@@ -1,18 +1,17 @@
 """
     Ideas:
-    go off of UTC
-    add hours depending on time zone chosen
     determine if time zone uses daylight savings and adjust from that point
     slider y/n for if you want to adjust for daylight savings
-
+    design interface for clock
 """
 
 import tkinter as tk
 import time
-from datetime import datetime
+from datetime import datetime, tzinfo, timedelta
 from pathlib import Path
 import json
 
+#list of accepted timezones and how they relate to the UTC (coordinated universal time)
 timezone_offsets = {
     "UTC": 0,        # Coordinated Universal Time
     "CET": 1,        # Central European Time
@@ -37,27 +36,48 @@ timezone_offsets = {
     "HST": -10       # Hawaii Standard Time
 }
 
+#converts timezones to a json
 path = Path("timezone_offsets.json")
 contents = json.dumps(timezone_offsets)
 path.write_text(contents)
 
-print(contents)
+#updates current_UTC to whatever the system time is
+def update_time(offset = 0):
+    # Get current UTC time in seconds since epoch
+    utc_seconds_since_epoch = time.time()
+    print(f"Seconds since epoch: {utc_seconds_since_epoch}")
 
-def update_time(timezone = 0):
-    current_UTC = datetime.now()
-    print(f"local time: {datetime.ctime(current_UTC)}")
+    # Convert time to UTC time string
+    UTC_time_string = time.asctime(time.gmtime(utc_seconds_since_epoch))
+    print(f"UTC time: {UTC_time_string}")
+
+    # prints string of local time
+    current_time = datetime.now()
+    print(f"local time: {datetime.ctime(current_time)}")
+
+    #print inputted timezone time (times 360 to convert hours into seconds)
+    tz_seconds_since_epoch = time.time() + (offset * 3600)
+    print(f"timezone seconds since epoch: {tz_seconds_since_epoch}")
+    tz_time_string = time.asctime(time.gmtime(tz_seconds_since_epoch))
+    print(f"Timezone time: {tz_time_string}")
+
+def print_timezone_options():
+    for key, value in timezone_offsets.items():
+        print(f"{key}: {value} hours away from UTC")
 
 def main():
-    
-    # Get current time in seconds since epoch
-    seconds_since_epoch = time.time()
-    print(f"Seconds since epoch: {seconds_since_epoch}")
-
-    # Convert time to local time string
-    local_time_string = time.ctime(seconds_since_epoch)
-    print(f"Local time: {local_time_string}")
-
+    #default prints seconds since epoch, local time, and utc time
     update_time()
+    #get user's preferred timezone
+    print_timezone_options()
+    tz_acronyms = timezone_offsets.keys()
+    current_timezone = input("Which of these timezones do you want to display? (write acronym) ")
+    while(current_timezone.upper() not in tz_acronyms):
+        print("Not a valid acronym! Try again... ")
+        current_timezone = input("Which of these timezones do you want to display? (write acronym) ")
+    #prints seconds since epoch, local time, utc time, and selected timezone time
+    update_time(timezone_offsets[current_timezone.upper()])
+
 
 if __name__ == "__main__":
     main()

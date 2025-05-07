@@ -10,11 +10,12 @@
     publish as website?
 """
 
-import tkinter as tk
 import time
 from datetime import datetime, tzinfo, timedelta
 from pathlib import Path
 import json
+from tkinter import *
+from tkinter import ttk
 
 #list of accepted timezones and how they relate to the UTC (coordinated universal time)
 timezone_offsets = {
@@ -70,7 +71,21 @@ def print_timezone_options():
     for key, value in timezone_offsets.items():
         print(f"{key}: {value} hours away from UTC")
 
+def create_GUI():
+    root = Tk()
+    frm = ttk.Frame(root, padding=20)
+    frm.grid()
+    ttk.Button(frm, text="Quit", command=root.destroy).grid(column=1, row=0)
+    for i in range (10):
+        ttk.Label(frm, text = "0").grid(column = 10, row = i)
+    for i in range (7):
+        ttk.Label(frm, text = "3").grid(column = 10 + i, row = 10)
+    root.mainloop()
+
 def main():
+    create_GUI()
+
+"""
     #default prints seconds since epoch, local time, and utc time
     update_time()
     #get user's preferred timezone
@@ -82,7 +97,7 @@ def main():
         current_timezone = input("Which of these timezones do you want to display? (write acronym) ")
     #prints seconds since epoch, local time, utc time, and selected timezone time
     update_time(timezone_offsets[current_timezone.upper()])
-
+"""
 
 if __name__ == "__main__":
     main()

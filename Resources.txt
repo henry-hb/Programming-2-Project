@@ -5,3 +5,4 @@ time module docs - https://docs.python.org/3/library/time.html#time.time
 datetime module docs - https://docs.python.org/3/library/datetime.html
 pytz module docs - https://pypi.org/project/pytz/
 time zones - https://www.timeanddate.com/time/zones/
+tkinter module docs - https://docs.python.org/3/library/tkinter.html#tkinter-modules

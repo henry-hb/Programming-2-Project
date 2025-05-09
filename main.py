@@ -16,6 +16,7 @@ from pathlib import Path
 import json
 from tkinter import *
 from tkinter import ttk
+import tkinter as tk
 
 #list of accepted timezones and how they relate to the UTC (coordinated universal time)
 timezone_offsets = {
@@ -47,43 +48,68 @@ path = Path("timezone_offsets.json")
 contents = json.dumps(timezone_offsets)
 path.write_text(contents)
 
-#updates current_UTC to whatever the system time is
-def update_time(offset = 0):
-    # Get current UTC time in seconds since epoch
-    utc_seconds_since_epoch = time.time()
-    print(f"Seconds since epoch: {utc_seconds_since_epoch}")
+class Clock():
+    def __init__(self, tz = "UTC"):
+        self.tz = tz.upper()
+        self.y = 5  # y-pos
+        self.c = 5  # counter
+        #creating gui
+        self.root = Tk()
+        self.frm = ttk.Frame(self.root, padding=20)
+        self.frm.grid()
+        ttk.Button(self.frm, text="Quit", command=self.root.destroy).grid(column=2, row=0)
+        ttk.Button(self.frm, text="Start Clock", command=self.write).grid(column=1, row=0)
+        # canvas
+        self.canvas = tk.Canvas(self.frm, height=800, width=800)
+        #not sure what this line does
+        self.canvas.bind("<Configure>", lambda e:self.canvas.configure(scrollregion=self.canvas.bbox("all")))
+        
+        #keeps code responsive
+        self.root.mainloop()
 
-    # Convert time to UTC time string
-    UTC_time_string = time.asctime(time.gmtime(utc_seconds_since_epoch))
-    print(f"UTC time: {UTC_time_string}")
+    def write(self):
+        if self.c > 0:
+            for i in range (10):
+                ttk.Label(self.frm, text = "0").grid(column = 10, row = i)
+            for i in range (7):
+                ttk.Label(self.frm, text = "3").grid(column = 10 + i, row = 10)
+            self.c -= 1  # reduce counter
+            self.after(1000, self.write)  # call again in 1 second
+        else:
+            self.c = 5   # when counter is 0 reset counter which allows to run infinitely without crashing (while true didn't work)
+            self.write()
 
-    # prints string of local time
-    current_time = datetime.now()
-    print(f"local time: {datetime.ctime(current_time)}")
 
-    #print inputted timezone time (times 360 to convert hours into seconds)
-    tz_seconds_since_epoch = time.time() + (offset * 3600)
-    print(f"timezone seconds since epoch: {tz_seconds_since_epoch}")
-    tz_time_string = time.asctime(time.gmtime(tz_seconds_since_epoch))
-    print(f"Timezone time: {tz_time_string}")
 
-def print_timezone_options():
-    for key, value in timezone_offsets.items():
-        print(f"{key}: {value} hours away from UTC")
 
-def create_GUI():
-    root = Tk()
-    frm = ttk.Frame(root, padding=20)
-    frm.grid()
-    ttk.Button(frm, text="Quit", command=root.destroy).grid(column=1, row=0)
-    for i in range (10):
-        ttk.Label(frm, text = "0").grid(column = 10, row = i)
-    for i in range (7):
-        ttk.Label(frm, text = "3").grid(column = 10 + i, row = 10)
-    root.mainloop()
+    #updates current_UTC to whatever the system time is
+    def update_time(self):
+        offset = timezone_offsets[self.tz]
+        # Get current UTC time in seconds since epoch
+        utc_seconds_since_epoch = time.time()
+        print(f"Seconds since epoch: {utc_seconds_since_epoch}")
+
+        # Convert time to UTC time string
+        UTC_time_string = time.asctime(time.gmtime(utc_seconds_since_epoch))
+        print(f"UTC time: {UTC_time_string}")
+
+        # prints string of local time
+        current_time = datetime.now()
+        print(f"local time: {datetime.ctime(current_time)}")
+
+        #print inputted timezone time (times 3600 to convert hours into seconds)
+        tz_seconds_since_epoch = time.time() + (offset * 3600)
+        print(f"timezone seconds since epoch: {tz_seconds_since_epoch}")
+        tz_time_string = time.asctime(time.gmtime(tz_seconds_since_epoch))
+        print(f"Timezone time: {tz_time_string}")
+
+    def print_timezone_options():
+        for key, value in timezone_offsets.items():
+            print(f"{key}: {value} hours away from UTC")
 
 def main():
-    create_GUI()
+    UTC_clock = Clock()
+
 
 """
     #default prints seconds since epoch, local time, and utc time

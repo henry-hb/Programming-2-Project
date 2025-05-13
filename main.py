@@ -17,6 +17,7 @@ import json
 from tkinter import *
 from tkinter import ttk
 import tkinter as tk
+import math
 
 #list of accepted timezones and how they relate to the UTC (coordinated universal time)
 timezone_offsets = {
@@ -49,37 +50,49 @@ contents = json.dumps(timezone_offsets)
 path.write_text(contents)
 
 class Clock():
-    def __init__(self, tz = "UTC"):
+    def __init__(self, tz = "UTC", daylight_savings = False):
         self.tz = tz.upper()
+        self.daylight_savings = daylight_savings
         self.y = 5  # y-pos
         self.c = 5  # counter
         #creating gui
         self.root = Tk()
+        self.root.geometry("800x800")
+        self.root.title("World Clock")
+
+
         self.frm = ttk.Frame(self.root, padding=20)
         self.frm.grid()
         ttk.Button(self.frm, text="Quit", command=self.root.destroy).grid(column=2, row=0)
         ttk.Button(self.frm, text="Start Clock", command=self.write).grid(column=1, row=0)
         # canvas
         self.canvas = tk.Canvas(self.frm, height=800, width=800)
-        #not sure what this line does
+        #resizes screen
         self.canvas.bind("<Configure>", lambda e:self.canvas.configure(scrollregion=self.canvas.bbox("all")))
         
         #keeps code responsive
         self.root.mainloop()
 
     def write(self):
+        self.canvas.delete("all")
         if self.c > 0:
             for i in range (10):
-                ttk.Label(self.frm, text = "0").grid(column = 10, row = i)
+                hour_hand = ttk.Label(self.frm, text = self.update_time()["Hour"]).grid(column = 10, row = i)
             for i in range (7):
-                ttk.Label(self.frm, text = "3").grid(column = 10 + i, row = 10)
+                minute_hand = ttk.Label(self.frm, text = self.update_time()["Minute"]).grid(column = 10 + i, row = 10)
+            for i in range (5):
+                second_hand = ttk.Label(self.frm, text = self.update_time()["Second"]).grid(column = 10 - i, row = 10)
             self.c -= 1  # reduce counter
-            self.after(1000, self.write)  # call again in 1 second
+            self.root.after(1000, self.write)  # call again in 1 second
         else:
             self.c = 5   # when counter is 0 reset counter which allows to run infinitely without crashing (while true didn't work)
             self.write()
 
-
+    def update_position(self, angle=0):
+        x = math.cos(angle) * 200 + 250
+        y = math.sin(angle) * 200 + 250
+        self.canvas.coords(self.hour_hand, x, y)
+        self.canvas.after(1000, self.update_position,angle+0.1)
 
 
     #updates current_UTC to whatever the system time is
@@ -87,28 +100,29 @@ class Clock():
         offset = timezone_offsets[self.tz]
         # Get current UTC time in seconds since epoch
         utc_seconds_since_epoch = time.time()
-        print(f"Seconds since epoch: {utc_seconds_since_epoch}")
-
-        # Convert time to UTC time string
-        UTC_time_string = time.asctime(time.gmtime(utc_seconds_since_epoch))
-        print(f"UTC time: {UTC_time_string}")
-
-        # prints string of local time
-        current_time = datetime.now()
-        print(f"local time: {datetime.ctime(current_time)}")
 
         #print inputted timezone time (times 3600 to convert hours into seconds)
         tz_seconds_since_epoch = time.time() + (offset * 3600)
-        print(f"timezone seconds since epoch: {tz_seconds_since_epoch}")
         tz_time_string = time.asctime(time.gmtime(tz_seconds_since_epoch))
-        print(f"Timezone time: {tz_time_string}")
+
+        #return dictionary of current hour, minute, seconds
+        if self.daylight_savings:
+            time_dict = {"Hour":(math.floor((tz_seconds_since_epoch / 3600) % 24) + 1),
+                        "Minute":(math.floor((tz_seconds_since_epoch / 60) % 60)),
+                        "Second":(math.floor(tz_seconds_since_epoch % 60))}
+            return time_dict
+        else:
+            time_dict = {"Hour":(math.floor((tz_seconds_since_epoch / 3600) % 24)),
+                        "Minute":(math.floor((tz_seconds_since_epoch / 60) % 60)),
+                        "Second":(math.floor(tz_seconds_since_epoch % 60))}
+            return time_dict
 
     def print_timezone_options():
         for key, value in timezone_offsets.items():
             print(f"{key}: {value} hours away from UTC")
 
 def main():
-    UTC_clock = Clock()
+    UTC_clock = Clock("PST", True)
 
 
 """

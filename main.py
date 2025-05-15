@@ -62,37 +62,102 @@ class Clock():
 
 
         self.frm = ttk.Frame(self.root, padding=20)
-        self.frm.grid()
-        ttk.Button(self.frm, text="Quit", command=self.root.destroy).grid(column=2, row=0)
-        ttk.Button(self.frm, text="Start Clock", command=self.write).grid(column=1, row=0)
+        self.frm.place(x=0, y=0)
+        quit = ttk.Button(self.frm, text="Quit", command=self.root.destroy)
+        quit.place(x=20, y=20)
+        start = ttk.Button(self.frm, text="Start Clock", command=self.write)
+        start.place(x=100, y=20)
         # canvas
-        self.canvas = tk.Canvas(self.frm, height=800, width=800)
+        self.canvas = tk.Canvas(self.frm, height=700, width=700)
+        self.canvas.place(x=50, y=80)
         #resizes screen
         self.canvas.bind("<Configure>", lambda e:self.canvas.configure(scrollregion=self.canvas.bbox("all")))
-        
+        #selects daylight savings
+        ds_button = ttk.Button(self.frm, text="Toggle Daylight Savings", command=self.change_ds)
+        ds_button.place(x=220, y=20)
+        ds_label = ttk.Label(self.frm, text = f"Daylight Savings: {self.daylight_savings}")
+        ds_label.place(x=400, y=20)
+
         #keeps code responsive
         self.root.mainloop()
 
     def write(self):
         self.canvas.delete("all")
         if self.c > 0:
+            
+
+            #times 6 because 60 seconds, but 360 degrees. plus 90 because sin/cos start on right but clock starts on top
+            second_angle = math.radians(self.update_time()["Second"] * 6 + 90)
+            minute_angle = math.radians(self.update_time()["Minute"] * 6 + 90)
+            hour_angle = math.radians(self.update_time()["Hour"] * 30 + 90)
+            if(self.update_time()["Second"] == 0):
+                minute_angle += math.radians(6)
+            if(self.update_time()["Minute"] == 0):
+                hour_angle += math.radians(12)
+
+            second_x = math.cos(second_angle) * 200 + 250
+            second_y = math.sin(second_angle) * 200 + 250
+            #self.canvas.coords(second_hand, second_x, second_y)
+
+            minute_x  = math.cos(minute_angle) * 200 + 250
+            minute_y = math.sin(minute_angle) * 200 + 250
+            #self.canvas.coords(minute_hand, minute_x, minute_y)
+
+            hour_x = math.cos(hour_angle) * 200 + 250
+            hour_y = math.sin(hour_angle) * 200 + 250
+            #self.canvas.coords(hour_hand, hour_x, hour_y)
+
             for i in range (10):
-                hour_hand = ttk.Label(self.frm, text = self.update_time()["Hour"]).grid(column = 10, row = i)
+                hour_hand = ttk.Label(self.frm, text = self.update_time()["Hour"])
+                hour_hand.place(x=hour_x,y=hour_y)
             for i in range (7):
-                minute_hand = ttk.Label(self.frm, text = self.update_time()["Minute"]).grid(column = 10 + i, row = 10)
+                minute_hand = ttk.Label(self.frm, text = self.update_time()["Minute"])
+                minute_hand.place(x=minute_x,y=minute_y)
             for i in range (5):
-                second_hand = ttk.Label(self.frm, text = self.update_time()["Second"]).grid(column = 10 - i, row = 10)
+                second_hand = ttk.Label(self.frm, text = self.update_time()["Second"])
+                second_hand.place(x=second_x,y=second_y)
+            
+
             self.c -= 1  # reduce counter
             self.root.after(1000, self.write)  # call again in 1 second
+
+
         else:
             self.c = 5   # when counter is 0 reset counter which allows to run infinitely without crashing (while true didn't work)
             self.write()
 
-    def update_position(self, angle=0):
-        x = math.cos(angle) * 200 + 250
-        y = math.sin(angle) * 200 + 250
-        self.canvas.coords(self.hour_hand, x, y)
-        self.canvas.after(1000, self.update_position,angle+0.1)
+    def change_ds(self):
+        if self.daylight_savings:
+            self.daylight_savings = False
+        else:
+            self.daylight_savings = True
+    
+        ds_label = ttk.Label(self.frm, text = f"Daylight Savings: {self.daylight_savings}").grid(column = 4, row = 0)
+
+
+    def update_position(self, second_angle):
+        #times 6 because 60 seconds, but 360 degrees. plus 90 because sin/cos start on right but clock starts on top
+        second_angle = self.update_time()["Second"] * 6 + 90
+        minute_angle = self.update_time()["Minute"] * 6 + 90
+        hour_angle = self.update_time()["Hour"] * 30 + 90
+        if(self.update_time()["Second"] == 0):
+            minute_angle += 6
+        if(self.update_time()["Minute"] == 0):
+            hour_angle += 12
+
+        second_x = math.cos(second_angle) * 200 + 250
+        second_y = math.sin(second_angle) * 200 + 250
+        self.canvas.coords(self.second_hand, second_x, second_y)
+
+        minute_x  = math.cos(minute_angle) * 200 + 250
+        minute_y = math.sin(minute_angle) * 200 + 250
+        self.canvas.coords(self.minute_hand, minute_x, minute_y)
+
+        hour_x = math.cos(hour_x) * 200 + 250
+        hour_y = math.sin(hour_y) * 200 + 250
+        self.canvas.coords(self.hour_hand, hour_x, hour_y)
+
+        self.canvas.after(1000, self.update_position)
 
 
     #updates current_UTC to whatever the system time is
@@ -117,27 +182,13 @@ class Clock():
                         "Second":(math.floor(tz_seconds_since_epoch % 60))}
             return time_dict
 
+    #just for testing
     def print_timezone_options():
         for key, value in timezone_offsets.items():
             print(f"{key}: {value} hours away from UTC")
 
 def main():
     UTC_clock = Clock("PST", True)
-
-
-"""
-    #default prints seconds since epoch, local time, and utc time
-    update_time()
-    #get user's preferred timezone
-    print_timezone_options()
-    tz_acronyms = timezone_offsets.keys()
-    current_timezone = input("Which of these timezones do you want to display? (write acronym) ")
-    while(current_timezone.upper() not in tz_acronyms):
-        print("Not a valid acronym! Try again... ")
-        current_timezone = input("Which of these timezones do you want to display? (write acronym) ")
-    #prints seconds since epoch, local time, utc time, and selected timezone time
-    update_time(timezone_offsets[current_timezone.upper()])
-"""
 
 if __name__ == "__main__":
     main()

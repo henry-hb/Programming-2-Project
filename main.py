@@ -1,12 +1,5 @@
 """
     Ideas:
-    determine if time zone uses daylight savings and adjust from that point
-    slider y/n for if you want to adjust for daylight savings
-
-    steps:
-    understand logic of user choosing a timezone and it changes the time that gets displayed
-    design interface so that timezone gets changed by clicking rectangles
-    design clock pattern so that it updates live and looks like a clock (while(True))?
     publish as website?
 """
 
@@ -18,6 +11,11 @@ from tkinter import *
 from tkinter import ttk
 import tkinter as tk
 import math
+import streamlit as st
+
+#creating website layout
+st.header("World Clock!", divider="rainbow")
+st.subheader("Made by Henry Hall-Brown")
 
 #list of accepted timezones and how they relate to the UTC (coordinated universal time)
 timezone_offsets = {
@@ -50,115 +48,96 @@ contents = json.dumps(timezone_offsets)
 path.write_text(contents)
 
 class Clock():
-    def __init__(self, tz = "UTC", daylight_savings = False):
+    def __init__(self, tz="UTC", daylight_savings=False):
         self.tz = tz.upper()
         self.daylight_savings = daylight_savings
-        self.y = 5  # y-pos
-        self.c = 5  # counter
-        #creating gui
-        self.root = Tk()
+        self.y = 5
+        self.c = 5
+
+        # Create root window
+        self.root = tk.Tk()
         self.root.geometry("800x800")
         self.root.title("World Clock")
 
+        # Create frame and place it
+        self.frm = ttk.Frame(self.root)
+        self.frm.place(x=0, y=0, width=800, height=800)
 
-        self.frm = ttk.Frame(self.root, padding=20)
-        self.frm.place(x=0, y=0)
-        quit = ttk.Button(self.frm, text="Quit", command=self.root.destroy)
-        quit.place(x=20, y=20)
-        start = ttk.Button(self.frm, text="Start Clock", command=self.write)
-        start.place(x=100, y=20)
-        # canvas
-        self.canvas = tk.Canvas(self.frm, height=700, width=700)
-        self.canvas.place(x=50, y=80)
-        #resizes screen
-        self.canvas.bind("<Configure>", lambda e:self.canvas.configure(scrollregion=self.canvas.bbox("all")))
-        #selects daylight savings
-        ds_button = ttk.Button(self.frm, text="Toggle Daylight Savings", command=self.change_ds)
-        ds_button.place(x=220, y=20)
-        ds_label = ttk.Label(self.frm, text = f"Daylight Savings: {self.daylight_savings}")
-        ds_label.place(x=400, y=20)
+        # Quit Button
+        quit_btn = ttk.Button(self.frm, text="Quit", command=self.root.destroy)
+        quit_btn.place(x=20, y=20)
 
-        #keeps code responsive
+        # Start Clock Button
+        start_btn = ttk.Button(self.frm, text="Start Clock", command=self.write)
+        start_btn.place(x=100, y=20)
+
+        # Toggle Daylight Savings Button
+        ds_button = ttk.Button(self.frm, text=f"Toggle Daylight Savings (Current: {self.daylight_savings})", command=self.change_ds)
+        ds_button.place(x=180, y=20)
+
+        # Canvas for drawing the clock
+        self.canvas = tk.Canvas(self.frm, width=700, height=700, bg="white")
+        self.canvas.place(x=50, y=70)
+
+        #dropdown menu for timezones
+        timezones = timezone_offsets.keys() 
+        self.opt = tk.StringVar(value=self.tz)
+        dropdown = OptionMenu(self.root, self.opt, *timezones)
+        dropdown.place(x=400,y=20)
+        self.tz = self.opt.get()
+
         self.root.mainloop()
 
-    def write(self):
-        self.canvas.delete("all")
-        if self.c > 0:
-            
+    #updates current daylight savings
+    def change_ds(self):
+        self.daylight_savings = not self.daylight_savings
+        ds_button = ttk.Button(self.frm, text=f"Toggle Daylight Savings (Current: {self.daylight_savings})", command=self.change_ds)
+        ds_button.place(x=180, y=20)
 
+    def write(self):
+        self.tz = self.opt.get()
+        #creates circle outline of clock
+        circle_id = self.canvas.create_oval(150, 35, 550, 435, fill="white", outline="black")
+        #removes everything from canvas so no labels repeat
+        for widget in self.frm.winfo_children():
+            # Check if the widget is a Label (ttk.Label or tk.Label)
+            if isinstance(widget, (ttk.Label, tk.Label)):
+                widget.destroy()  # removes the label from the GUI
+        #c is a counter so this code can run forever but not glitch out with a while(True) or something like that
+        if self.c > 0:
             #times 6 because 60 seconds, but 360 degrees. plus 90 because sin/cos start on right but clock starts on top
-            second_angle = math.radians(self.update_time()["Second"] * 6 + 90)
-            minute_angle = math.radians(self.update_time()["Minute"] * 6 + 90)
-            hour_angle = math.radians(self.update_time()["Hour"] * 30 + 90)
+            second_angle = math.radians(self.update_time()["Second"] * 6 - 90)
+            minute_angle = math.radians(self.update_time()["Minute"] * 6 - 90)
+            hour_angle = math.radians(self.update_time()["Hour"] * 30 - 90)
             if(self.update_time()["Second"] == 0):
                 minute_angle += math.radians(6)
             if(self.update_time()["Minute"] == 0):
                 hour_angle += math.radians(12)
-
-            second_x = math.cos(second_angle) * 200 + 250
-            second_y = math.sin(second_angle) * 200 + 250
-            #self.canvas.coords(second_hand, second_x, second_y)
-
-            minute_x  = math.cos(minute_angle) * 200 + 250
-            minute_y = math.sin(minute_angle) * 200 + 250
-            #self.canvas.coords(minute_hand, minute_x, minute_y)
-
-            hour_x = math.cos(hour_angle) * 200 + 250
-            hour_y = math.sin(hour_angle) * 200 + 250
-            #self.canvas.coords(hour_hand, hour_x, hour_y)
-
-            for i in range (10):
+            
+            #creates all clock hands
+            for i in range (1,6):
+                #multiplied by i * 20 so that they are all in a line
+                hour_x = math.cos(hour_angle) * (i*20) + 400
+                hour_y = math.sin(hour_angle) * (i*20) + 300
                 hour_hand = ttk.Label(self.frm, text = self.update_time()["Hour"])
                 hour_hand.place(x=hour_x,y=hour_y)
-            for i in range (7):
+            for i in range (1,8):
+                minute_x  = math.cos(minute_angle) * (i*20) + 400
+                minute_y = math.sin(minute_angle) * (i*20) + 300
                 minute_hand = ttk.Label(self.frm, text = self.update_time()["Minute"])
                 minute_hand.place(x=minute_x,y=minute_y)
-            for i in range (5):
+            for i in range (1,10):
+                second_x = math.cos(second_angle) * (i*20) + 400
+                second_y = math.sin(second_angle) * (i*20) + 300
                 second_hand = ttk.Label(self.frm, text = self.update_time()["Second"])
                 second_hand.place(x=second_x,y=second_y)
-            
 
             self.c -= 1  # reduce counter
             self.root.after(1000, self.write)  # call again in 1 second
 
-
         else:
             self.c = 5   # when counter is 0 reset counter which allows to run infinitely without crashing (while true didn't work)
             self.write()
-
-    def change_ds(self):
-        if self.daylight_savings:
-            self.daylight_savings = False
-        else:
-            self.daylight_savings = True
-    
-        ds_label = ttk.Label(self.frm, text = f"Daylight Savings: {self.daylight_savings}").grid(column = 4, row = 0)
-
-
-    def update_position(self, second_angle):
-        #times 6 because 60 seconds, but 360 degrees. plus 90 because sin/cos start on right but clock starts on top
-        second_angle = self.update_time()["Second"] * 6 + 90
-        minute_angle = self.update_time()["Minute"] * 6 + 90
-        hour_angle = self.update_time()["Hour"] * 30 + 90
-        if(self.update_time()["Second"] == 0):
-            minute_angle += 6
-        if(self.update_time()["Minute"] == 0):
-            hour_angle += 12
-
-        second_x = math.cos(second_angle) * 200 + 250
-        second_y = math.sin(second_angle) * 200 + 250
-        self.canvas.coords(self.second_hand, second_x, second_y)
-
-        minute_x  = math.cos(minute_angle) * 200 + 250
-        minute_y = math.sin(minute_angle) * 200 + 250
-        self.canvas.coords(self.minute_hand, minute_x, minute_y)
-
-        hour_x = math.cos(hour_x) * 200 + 250
-        hour_y = math.sin(hour_y) * 200 + 250
-        self.canvas.coords(self.hour_hand, hour_x, hour_y)
-
-        self.canvas.after(1000, self.update_position)
-
 
     #updates current_UTC to whatever the system time is
     def update_time(self):
@@ -188,7 +167,7 @@ class Clock():
             print(f"{key}: {value} hours away from UTC")
 
 def main():
-    UTC_clock = Clock("PST", True)
+    UTC_clock = Clock("UTC", False)
 
 if __name__ == "__main__":
     main()

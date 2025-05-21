@@ -1,7 +1,3 @@
-"""
-    Ideas:
-    publish as website?
-"""
 
 import time
 from datetime import datetime, tzinfo, timedelta
@@ -56,6 +52,8 @@ class Clock():
         self.daylight_savings = daylight_savings
         self.y = 5
         self.c = 5
+        self.color1 = color1
+        self.color2 = color2
 
         # Create root window
         self.root = tk.Tk()
@@ -71,7 +69,7 @@ class Clock():
         quit_btn.place(x=20, y=20)
 
         # Start Clock Button
-        start_btn = ttk.Button(self.frm, text="Start Clock", command = lambda: self.write(color1, color2))
+        start_btn = ttk.Button(self.frm, text="Start Clock", command = lambda: self.write(self.color1, self.color2))
         start_btn.place(x=100, y=20)
 
         # Toggle Daylight Savings Button
@@ -79,10 +77,8 @@ class Clock():
         ds_button.place(x=180, y=20)
 
         # Canvas for drawing the clock
-        self.canvas = tk.Canvas(self.frm, width=700, height=700, bg=color1)
+        self.canvas = tk.Canvas(self.frm, width=700, height=700, bg=self.color1)
         self.canvas.place(x=50, y=70)
-
-        #dropdown for color options
 
         #dropdown menu for timezones
         timezones = timezone_offsets.keys() 
@@ -90,6 +86,14 @@ class Clock():
         dropdown = OptionMenu(self.root, self.opt, *timezones)
         dropdown.place(x=400,y=20)
         self.tz = self.opt.get()
+
+        #dropdown for color options
+        colors = color_options.keys() 
+        self.col = tk.StringVar(value="Light Mode")
+        dropdown = OptionMenu(self.root, self.col, *color_options)
+        dropdown.place(x=470,y=20)
+        self.color1 = self.col.get()[0]
+        self.color2 = self.col.get()[1]
 
         self.root.mainloop()
 
@@ -102,12 +106,8 @@ class Clock():
     def change_color(self, color:str):
         self.canvas.configure(bg=color)
 
-    def write(self, color1:str, color2:str):
-        self.tz = self.opt.get()
-        #sets background color to color1
-        self.canvas.configure(bg=color1)
         #creates circle outline of clock
-        circle_id = self.canvas.create_oval(150, 35, 550, 435, fill="white", outline=color2, width = 5)
+        circle_id = self.canvas.create_oval(150, 35, 550, 435, fill="white", outline=self.color2, width = 5)
         #removes everything from canvas so no labels repeat
         for widget in self.frm.winfo_children():
             # Check if the widget is a Label (ttk.Label or tk.Label)
@@ -143,11 +143,11 @@ class Clock():
                 second_hand.place(x=second_x,y=second_y)
 
             self.c -= 1  # reduce counter
-            self.root.after(1000, self.write(color1, color2))  # call again in 1 second
+            self.root.after(1000, lambda : self.write(self.color1, self.color2))  # call again in 1 second
 
         else:
             self.c = 5   # when counter is 0 reset counter which allows to run infinitely without crashing (while true didn't work)
-            self.write(color1, color2)
+            self.write(self.color1, self.color2)
 
     #updates current_UTC to whatever the system time is
     def update_time(self):

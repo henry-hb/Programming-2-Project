@@ -11,11 +11,6 @@ from tkinter import *
 from tkinter import ttk
 import tkinter as tk
 import math
-import streamlit as st
-
-#creating website layout
-st.header("World Clock!", divider="rainbow")
-st.subheader("Made by Henry Hall-Brown")
 
 #list of accepted timezones and how they relate to the UTC (coordinated universal time)
 timezone_offsets = {
@@ -42,13 +37,21 @@ timezone_offsets = {
     "HST": -10       # Hawaii Standard Time
 }
 
+color_options = {
+    "Light Mode": ["white", "black"],
+    "Dark Mode": ["black", "white"],
+
+
+
+}
+
 #converts timezones to a json
 path = Path("timezone_offsets.json")
 contents = json.dumps(timezone_offsets)
 path.write_text(contents)
 
 class Clock():
-    def __init__(self, tz="UTC", daylight_savings=False):
+    def __init__(self, tz="UTC", daylight_savings=False, color1 = "white", color2 = "black"):
         self.tz = tz.upper()
         self.daylight_savings = daylight_savings
         self.y = 5
@@ -68,7 +71,7 @@ class Clock():
         quit_btn.place(x=20, y=20)
 
         # Start Clock Button
-        start_btn = ttk.Button(self.frm, text="Start Clock", command=self.write)
+        start_btn = ttk.Button(self.frm, text="Start Clock", command = lambda: self.write(color1, color2))
         start_btn.place(x=100, y=20)
 
         # Toggle Daylight Savings Button
@@ -76,8 +79,10 @@ class Clock():
         ds_button.place(x=180, y=20)
 
         # Canvas for drawing the clock
-        self.canvas = tk.Canvas(self.frm, width=700, height=700, bg="white")
+        self.canvas = tk.Canvas(self.frm, width=700, height=700, bg=color1)
         self.canvas.place(x=50, y=70)
+
+        #dropdown for color options
 
         #dropdown menu for timezones
         timezones = timezone_offsets.keys() 
@@ -94,10 +99,15 @@ class Clock():
         ds_button = ttk.Button(self.frm, text=f"Toggle Daylight Savings (Current: {self.daylight_savings})", command=self.change_ds)
         ds_button.place(x=180, y=20)
 
-    def write(self):
+    def change_color(self, color:str):
+        self.canvas.configure(bg=color)
+
+    def write(self, color1:str, color2:str):
         self.tz = self.opt.get()
+        #sets background color to color1
+        self.canvas.configure(bg=color1)
         #creates circle outline of clock
-        circle_id = self.canvas.create_oval(150, 35, 550, 435, fill="white", outline="black")
+        circle_id = self.canvas.create_oval(150, 35, 550, 435, fill="white", outline=color2, width = 5)
         #removes everything from canvas so no labels repeat
         for widget in self.frm.winfo_children():
             # Check if the widget is a Label (ttk.Label or tk.Label)
@@ -133,11 +143,11 @@ class Clock():
                 second_hand.place(x=second_x,y=second_y)
 
             self.c -= 1  # reduce counter
-            self.root.after(1000, self.write)  # call again in 1 second
+            self.root.after(1000, self.write(color1, color2))  # call again in 1 second
 
         else:
             self.c = 5   # when counter is 0 reset counter which allows to run infinitely without crashing (while true didn't work)
-            self.write()
+            self.write(color1, color2)
 
     #updates current_UTC to whatever the system time is
     def update_time(self):
@@ -167,7 +177,7 @@ class Clock():
             print(f"{key}: {value} hours away from UTC")
 
 def main():
-    UTC_clock = Clock("UTC", False)
+    UTC_clock = Clock("UTC", False, "white", "black")
 
 if __name__ == "__main__":
     main()

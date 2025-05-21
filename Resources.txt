@@ -7,3 +7,6 @@ pytz module docs - https://pypi.org/project/pytz/
 time zones - https://www.timeanddate.com/time/zones/
 tkinter module docs - https://docs.python.org/3/library/tkinter.html#tkinter-modules
 live updates forum - https://stackoverflow.com/questions/75410733/is-there-a-way-to-make-tkinter-windows-work-independantly-tkinter
+rotation tutorial - https://www.tutorialspoint.com/how-to-rotate-text-around-or-inside-a-circle-in-tkinter
+dropdown menu tutorial for time zones - https://www.geeksforgeeks.org/dropdown-menus-tkinter/
+streamlit app for publishing website with code - https://docs.streamlit.io/

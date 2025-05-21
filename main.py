@@ -36,9 +36,24 @@ timezone_offsets = {
 color_options = {
     "Light Mode": ["white", "black"],
     "Dark Mode": ["black", "white"],
-
-
-
+    "Red/Black": ["red", "black"],
+    "Blue/White": ["blue", "white"],
+    "Green/Black": ["green", "black"],
+    "Yellow/Blue": ["yellow", "blue"],
+    "Purple/Yellow": ["purple", "yellow"],
+    "Orange/Black": ["orange", "black"],
+    "Pink/White": ["pink", "white"],
+    "Teal/White": ["teal", "white"],
+    "Brown/White": ["brown", "white"],
+    "Grey/Black": ["grey", "black"],
+    "Navy/White": ["navy", "white"],
+    "Maroon/White": ["maroon", "white"],
+    "Cyan/Black": ["cyan", "black"],
+    "Lime/Black": ["lime", "black"],
+    "Gold/Black": ["gold", "black"],
+    "Sky Blue/Dark Blue": ["sky blue", "dark blue"],
+    "Dark Green/White": ["dark green", "white"],
+    "Slate Grey/White": ["slate gray", "white"]
 }
 
 #converts timezones to a json
@@ -69,7 +84,7 @@ class Clock():
         quit_btn.place(x=20, y=20)
 
         # Start Clock Button
-        start_btn = ttk.Button(self.frm, text="Start Clock", command = lambda: self.write(self.color1, self.color2))
+        start_btn = ttk.Button(self.frm, text="Start Clock", command = self.write)
         start_btn.place(x=100, y=20)
 
         # Toggle Daylight Savings Button
@@ -90,12 +105,14 @@ class Clock():
         #dropdown for color options
         colors = color_options.keys() 
         self.col = tk.StringVar(value="Light Mode")
-        dropdown = OptionMenu(self.root, self.col, *color_options)
-        dropdown.place(x=470,y=20)
-        self.color1 = self.col.get()[0]
-        self.color2 = self.col.get()[1]
+        theme_menu = OptionMenu(self.root, self.col, *color_options.keys(), command=self.change_theme)
+        theme_menu.place(x=470, y=20)
 
         self.root.mainloop()
+
+    def change_theme(self, selection):
+        self.color1, self.color2 = color_options[selection]
+        self.canvas.configure(bg=self.color1)
 
     #updates current daylight savings
     def change_ds(self):
@@ -103,11 +120,12 @@ class Clock():
         ds_button = ttk.Button(self.frm, text=f"Toggle Daylight Savings (Current: {self.daylight_savings})", command=self.change_ds)
         ds_button.place(x=180, y=20)
 
-    def change_color(self, color:str):
-        self.canvas.configure(bg=color)
-
+    def write(self):
         #creates circle outline of clock
-        circle_id = self.canvas.create_oval(150, 35, 550, 435, fill="white", outline=self.color2, width = 5)
+        if(self.color2 == "white"):
+            circle_id = self.canvas.create_oval(150, 35, 550, 435, fill="grey", outline=self.color2, width = 5)
+        else:
+            circle_id = self.canvas.create_oval(150, 35, 550, 435, fill="white", outline=self.color2, width = 5)
         #removes everything from canvas so no labels repeat
         for widget in self.frm.winfo_children():
             # Check if the widget is a Label (ttk.Label or tk.Label)
@@ -142,15 +160,48 @@ class Clock():
                 second_hand = ttk.Label(self.frm, text = self.update_time()["Second"])
                 second_hand.place(x=second_x,y=second_y)
 
+            #creates time displays on bottom part of screen
+            #ny, london, dubai, sydney, tokyo, moscow
+            ny_seconds_since_epoch = time.time() + (timezone_offsets["EST"] * 3600)
+            ny_time_string = time.strftime("%H:%M:%S", time.gmtime(ny_seconds_since_epoch))
+            ny_clock = ttk.Label(self.frm, text = "New York:" + "\n" + ny_time_string)
+            ny_clock.place(x=125,y=600)
+
+            lon_seconds_since_epoch = time.time() + (timezone_offsets["UTC"] * 3600)
+            lon_time_string = time.strftime("%H:%M:%S", time.gmtime(lon_seconds_since_epoch))
+            lon_clock = ttk.Label(self.frm, text = "London:" + "\n" + lon_time_string)
+            lon_clock.place(x=225,y=600)
+
+            dub_seconds_since_epoch = time.time() + (timezone_offsets["GST"] * 3600)
+            dub_time_string = time.strftime("%H:%M:%S", time.gmtime(dub_seconds_since_epoch))
+            dub_clock = ttk.Label(self.frm, text = "Dubai:" + "\n" + dub_time_string)
+            dub_clock.place(x=325,y=600)
+
+            syd_seconds_since_epoch = time.time() + (timezone_offsets["AEST"] * 3600)
+            syd_time_string = time.strftime("%H:%M:%S", time.gmtime(syd_seconds_since_epoch))
+            syd_clock = ttk.Label(self.frm, text = "Sydney:" + "\n" + syd_time_string)
+            syd_clock.place(x=425,y=600)
+
+            tok_seconds_since_epoch = time.time() + (timezone_offsets["JST"] * 3600)
+            tok_time_string = time.strftime("%H:%M:%S", time.gmtime(tok_seconds_since_epoch))
+            tok_clock = ttk.Label(self.frm, text = "Tokyo:" + "\n" + tok_time_string)
+            tok_clock.place(x=525,y=600)
+
+            mos_seconds_since_epoch = time.time() + (timezone_offsets["MSK"] * 3600)
+            mos_time_string = time.strftime("%H:%M:%S", time.gmtime(mos_seconds_since_epoch))
+            mos_clock = ttk.Label(self.frm, text = "Moscow:" + "\n" + mos_time_string)
+            mos_clock.place(x=625,y=600)
+
             self.c -= 1  # reduce counter
-            self.root.after(1000, lambda : self.write(self.color1, self.color2))  # call again in 1 second
+            self.root.after(1000, self.write)  # call again in 1 second
 
         else:
             self.c = 5   # when counter is 0 reset counter which allows to run infinitely without crashing (while true didn't work)
-            self.write(self.color1, self.color2)
+            self.write()
 
     #updates current_UTC to whatever the system time is
     def update_time(self):
+        self.tz = self.opt.get()  # Make sure timezone is always current
         offset = timezone_offsets[self.tz]
         # Get current UTC time in seconds since epoch
         utc_seconds_since_epoch = time.time()

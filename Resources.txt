@@ -10,3 +10,4 @@ live updates forum - https://stackoverflow.com/questions/75410733/is-there-a-way
 rotation tutorial - https://www.tutorialspoint.com/how-to-rotate-text-around-or-inside-a-circle-in-tkinter
 dropdown menu tutorial for time zones - https://www.geeksforgeeks.org/dropdown-menus-tkinter/
 streamlit app for publishing website with code - https://docs.streamlit.io/
+color changes - https://stackoverflow.com/questions/61534908/how-to-change-the-background-color-of-a-tkinter-canvas-after-it-is-created

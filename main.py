@@ -98,14 +98,14 @@ class Clock():
         timezones = timezone_offsets.keys() 
         self.opt = tk.StringVar(value=self.tz)
         dropdown = OptionMenu(self.root, self.opt, *timezones)
-        dropdown.place(x=400,y=20)
+        dropdown.place(x=401,y=20)
         self.tz = self.opt.get()
 
         #dropdown for color options
         colors = color_options.keys() 
         self.col = tk.StringVar(value="Light Mode")
         theme_menu = OptionMenu(self.root, self.col, *color_options.keys(), command=self.change_theme)
-        theme_menu.place(x=470, y=20)
+        theme_menu.place(x=495, y=20)
 
         self.root.mainloop()
 
@@ -190,7 +190,7 @@ class Clock():
             mos_time_string = time.strftime("%H:%M:%S", time.gmtime(mos_seconds_since_epoch))
             mos_clock = ttk.Label(self.frm, text = "Moscow:" + "\n" + mos_time_string)
             mos_clock.place(x=625,y=600)
-
+            
             self.c -= 1  # reduce counter
             self.root.after(1000, self.write)  # call again in 1 second
 
@@ -210,15 +210,35 @@ class Clock():
         tz_time_string = time.asctime(time.gmtime(tz_seconds_since_epoch))
 
         #return dictionary of current hour, minute, seconds
+        #dictionary updates for AM/PM so that it uses a 12 hour format and not 24 hours
         if self.daylight_savings:
-            time_dict = {"Hour":(math.floor((tz_seconds_since_epoch / 3600) % 24) + 1),
-                        "Minute":(math.floor((tz_seconds_since_epoch / 60) % 60)),
-                        "Second":(math.floor(tz_seconds_since_epoch % 60))}
+            if (int)(time.strftime("%H", time.gmtime(tz_seconds_since_epoch))) >= 12:
+                past_noon = ttk.Label(self.frm, text = "PM")
+                past_noon.place(x=400,y=300)
+                time_dict = {"Hour":(int)(math.floor((int)((tz_seconds_since_epoch / 3600) % 24) - 12) + 1),
+                            "Minute":(math.floor((tz_seconds_since_epoch / 60) % 60)),
+                            "Second":(math.floor(tz_seconds_since_epoch % 60))}
+            else:
+                before_noon = ttk.Label(self.frm, text = "AM")
+                before_noon.place(x=400,y=300)
+                time_dict = {"Hour":(int)(math.floor((int)(tz_seconds_since_epoch / 3600) % 24) + 1),
+                            "Minute":(math.floor((tz_seconds_since_epoch / 60) % 60)),
+                            "Second":(math.floor(tz_seconds_since_epoch % 60))}
             return time_dict
         else:
-            time_dict = {"Hour":(math.floor((tz_seconds_since_epoch / 3600) % 24)),
-                        "Minute":(math.floor((tz_seconds_since_epoch / 60) % 60)),
-                        "Second":(math.floor(tz_seconds_since_epoch % 60))}
+            if (int)(time.strftime("%H", time.gmtime(tz_seconds_since_epoch))) >= 12:
+                past_noon = ttk.Label(self.frm, text = "PM")
+                past_noon.place(x=400,y=300)
+                time_dict = {"Hour":(int)(math.floor((tz_seconds_since_epoch / 3600) % 24) - 12),
+                            "Minute":(math.floor((tz_seconds_since_epoch / 60) % 60)),
+                            "Second":(math.floor(tz_seconds_since_epoch % 60))}
+            else:
+                before_noon = ttk.Label(self.frm, text = "AM")
+                before_noon.place(x=400,y=300)
+                time_dict = {"Hour":(int)(math.floor((tz_seconds_since_epoch / 3600) % 24)),
+                            "Minute":(math.floor((tz_seconds_since_epoch / 60) % 60)),
+                            "Second":(math.floor(tz_seconds_since_epoch % 60))}
+
             return time_dict
 
     #just for testing

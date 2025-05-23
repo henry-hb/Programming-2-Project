@@ -56,11 +56,13 @@ color_options = {
 }
 
 #converts timezones to a json
+#never used this but was good practice
 path = Path("timezone_offsets.json")
 contents = json.dumps(timezone_offsets)
 path.write_text(contents)
 
 class Clock():
+    #automatically instantiates with universal timezone (grenwich mean time) and light mode color scheme as default
     def __init__(self, tz="UTC", daylight_savings=False, color1 = "white", color2 = "black"):
         self.tz = tz.upper()
         self.daylight_savings = daylight_savings
@@ -108,7 +110,7 @@ class Clock():
         theme_menu.place(x=495, y=20)
 
         self.root.mainloop()
-
+    #function for color option dropdown so it updates automatically without waiting for write() to update every second
     def change_theme(self, selection):
         self.color1, self.color2 = color_options[selection]
         self.canvas.configure(bg=self.color1)
@@ -159,7 +161,7 @@ class Clock():
                 second_hand = ttk.Label(self.frm, text = self.update_time()["Second"])
                 second_hand.place(x=second_x,y=second_y)
 
-            #creates time displays on bottom part of screen
+            #creates world clock time displays on bottom part of screen
             #ny, london, dubai, sydney, tokyo, moscow
             ny_seconds_since_epoch = time.time() + (timezone_offsets["EST"] * 3600)
             ny_time_string = time.strftime("%H:%M:%S", time.gmtime(ny_seconds_since_epoch))
@@ -247,7 +249,7 @@ class Clock():
             print(f"{key}: {value} hours away from UTC")
 
 def main():
-    UTC_clock = Clock("UTC", False, "white", "black")
+    clock = Clock()
 
 if __name__ == "__main__":
     main()

@@ -109,7 +109,9 @@ class Clock():
         theme_menu = OptionMenu(self.root, self.col, *color_options.keys(), command=self.change_theme)
         theme_menu.place(x=495, y=20)
 
+        #keeps tkinter window active and responsive
         self.root.mainloop()
+        
     #function for color option dropdown so it updates automatically without waiting for write() to update every second
     def change_theme(self, selection):
         self.color1, self.color2 = color_options[selection]
